@@ -6,8 +6,8 @@ cat << 'EOF' > Containerfile
 FROM php:8.2-apache
 
 # Copy the local position.php file into the container as index.php
-#COPY position.php /var/www/html/index.php
-COPY tradelog.php /var/www/html/index.php
+COPY position.php /var/www/html/index.php
+#COPY tradelog.php /var/www/html/index.php
 RUN chmod 644 /var/www/html/index.php
 
 # Expose port 80 (standard for Apache)
