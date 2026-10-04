@@ -1,0 +1,45 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: position_size
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: position-szie-deploy
+  labels:
+    app: position-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: position-app
+  template:
+    metadata:
+      labels:
+        app: position-app
+    spec:
+      containers:
+        # --- Guacamole App Container ---
+        - name: positionsize
+          image: docker.io/jsanderson104/stuff:position_size-v1
+          ports:
+            - containerPort: 80
+              name: web-80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: positionsize-loadbalancer
+  labels:
+    app: position-app
+spec:
+  type: LoadBalancer
+  selector:
+    app: position-app
+  ports:
+    - name: web-80
+      protocol: TCP
+      port: 80
+      targetPort: 80
