@@ -81,7 +81,7 @@
         </div>
         <div class="form-group">
             <label for="stop_loss_percent">Option Stop Loss (%)</label>
-            <input type="number" step="1" name="stop_loss_percent" id="stop_loss_percent" value="<?php echo $stop_loss_percent; ?>" required>
+            <input type="number" step="0.1" name="stop_loss_percent" id="stop_loss_percent" value="<?php echo $stop_loss_percent; ?>" required>
         </div>
         <div class="form-group">
             <label for="take_profit_percent">Option Take Profit (%)</label>
