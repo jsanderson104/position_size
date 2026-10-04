@@ -32,6 +32,10 @@ $take_profit_price = $option_price * (1 + ($take_profit_pct / 100));
 
 // 7. Actual dollar risk for the current position size
 $actual_risk_dollars = $quantity * $risk_per_contract_dollars;
+
+// 8. Potential Profit
+$potential_profit_per_contract = $option_price * ($take_profit_pct/100) * 100
+$potential_profit = potential_profit_per_contract * $quantity
 ?>
 
 <!DOCTYPE html>
@@ -114,9 +118,14 @@ $actual_risk_dollars = $quantity * $risk_per_contract_dollars;
                 <li><strong>Max Allowed Risk:</strong> $<?php echo number_format($max_risk_dollars, 2); ?> (<?php echo $max_risk_pct; ?>% of balance)</li>
                 <li><strong>Recommended Contracts to Buy:</strong> <?php echo $recommended_contracts; ?> contract(s)</li>
                 <li><strong>Collateral/Capital Needed (for <?php echo $quantity; ?> contracts):</strong> $<?php echo number_format($collateral_needed, 2); ?></li>
+                
+                <li class="divider"><hr></li>
                 <li><strong>Stop Loss Price:</strong> $<?php echo number_format($stop_loss_price, 2); ?> (-<?php echo $stop_loss_pct; ?>%)</li>
                 <li><strong>Take Profit Price:</strong> $<?php echo number_format($take_profit_price, 2); ?> (+<?php echo $take_profit_pct; ?>%)</li>
+                <li class="divider"><hr></li>
                 <li><strong>Total Position Risk (for <?php echo $quantity; ?> contracts):</strong> $<?php echo number_format($actual_risk_dollars, 2); ?></li>
+                <li><strong>Potential Gain (for <?php echo $quantity; ?> contracts):</strong> $<?php echo number_format($potential_profi, 2); ?></li>
+
             </ul>
         </div>
     <?php endif; ?>
