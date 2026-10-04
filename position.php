@@ -35,7 +35,7 @@ $actual_risk_dollars = $quantity * $risk_per_contract_dollars;
 
 // 8. Potential Profit
 $potential_profit_per_contract = $option_price * ($take_profit_pct/100) * 100
-$potential_profit = potential_profit_per_contract * $quantity
+$potential_profit = $potential_profit_per_contract * $quantity
 ?>
 
 <!DOCTYPE html>
@@ -124,7 +124,7 @@ $potential_profit = potential_profit_per_contract * $quantity
                 <li><strong>Take Profit Price:</strong> $<?php echo number_format($take_profit_price, 2); ?> (+<?php echo $take_profit_pct; ?>%)</li>
                 <li class="divider"><hr></li>
                 <li><strong>Total Position Risk (for <?php echo $quantity; ?> contracts):</strong> $<?php echo number_format($actual_risk_dollars, 2); ?></li>
-                <li><strong>Potential Gain (for <?php echo $quantity; ?> contracts):</strong> $<?php echo number_format($potential_profi, 2); ?></li>
+                <li><strong>Potential Gain (for <?php echo $quantity; ?> contracts):</strong> $<?php echo number_format($potential_profit, 2); ?></li>
 
             </ul>
         </div>
