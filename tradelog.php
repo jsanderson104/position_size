@@ -22,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $risk_percent = isset($_POST['risk_percent']) ? floatval($_POST['risk_percent']) : 2;
     $premium = isset($_POST['premium']) ? floatval($_POST['premium']) : 0;
     $stop_loss_percent = isset($_POST['stop_loss_percent']) ? floatval($_POST['stop_loss_percent']) : 0;
+    $take_profit_percent = floatval($_POST['take_profit_percent']);
+    $option_premium = floatval($_POST['option_premium']);
     
     // Core Risk Calculations
     if ($account_size > 0 && $risk_percent > 0 && $premium > 0 && $stop_loss_percent > 0) {
@@ -48,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($file) {
                 // If it's a brand new file, write the headers first
                 if (!$file_exists) {
-                    fputcsv($file, ['Date', 'Account Size ($)', 'Risk %', 'Risk Amt ($)', 'Option Premium ($)', 'Stop Loss %', 'Max Contracts', 'Total Cost ($)']);
+                    fputcsv($file, ['Date', 'Account Size ($)', 'Risk %', 'Risk Amt ($)', 'Option Premium ($)', 'Stop Loss %', 'Take Profit %', Max Contracts', 'Total Cost ($)']);
                 }
                 
                 // Write the trade data row
@@ -59,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $risk_amount,
                     $premium,
                     $stop_loss_percent,
+                    $take_profit_percent,
                     $max_contracts,
                     $total_position_cost
                 ];
