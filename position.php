@@ -55,6 +55,23 @@ $potential_profit = $potential_profit_per_contract * $quantity;
         .alert { padding: 10px; margin-bottom: 15px; border-radius: 4px; font-weight: bold; }
         .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        
+
+    li.divider {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    li.divider hr {
+        border: 0;
+        border-top: 1px solid #ccc;
+        margin: 10px 0;
+    }
+
+
+
+
     </style>
 </head>
 <body>
