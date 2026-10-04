@@ -1,84 +1,3 @@
-<?php
-// --- CONFIGURATION ---
-$csv_filename = 'tradelog.csv';
-
-// --- INITIALIZE VARIABLES & DEFAULTS ---
-$account_size = 2000;
-$risk_percent = 2;
-$premium = 0;
-$contracts = 0;
-$stop_loss_percent = 0;
-
-$risk_amount = 0;
-$total_position_cost = 0;
-$max_contracts = 0;
-$log_message = "";
-$error_message = "";
-
-// --- PROCESS FORM SUBMISSION ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Sanitize and grab inputs
-    $account_size = isset($_POST['account_size']) ? floatval($_POST['account_size']) : 2000;
-    $risk_percent = isset($_POST['risk_percent']) ? floatval($_POST['risk_percent']) : 2;
-    $premium = isset($_POST['premium']) ? floatval($_POST['premium']) : 0;
-    $stop_loss_percent = isset($_POST['stop_loss_percent']) ? floatval($_POST['stop_loss_percent']) : 0;
-    $take_profit_percent = floatval($_POST['take_profit_percent']);
-    $option_premium = floatval($_POST['option_premium']);
-    
-    // Core Risk Calculations
-    if ($account_size > 0 && $risk_percent > 0 && $premium > 0 && $stop_loss_percent > 0) {
-        // Cash amount willing to lose on this trade
-        $risk_amount = $account_size * ($risk_percent / 100);
-        
-        // Loss per single options contract based on the stop loss % (1 contract = 100 shares)
-        $loss_per_contract = ($premium * 100) * ($stop_loss_percent / 100);
-        
-        // Calculate max contracts allowed based on risk rules
-        if ($loss_per_contract > 0) {
-            $max_contracts = floor($risk_amount / $loss_per_contract);
-        }
-        
-        $total_position_cost = $max_contracts * ($premium * 100);
-        
-        // Check if user wants to log this trade to the CSV
-        if (isset($_POST['log_trade']) && $_POST['log_trade'] == '1' && $max_contracts > 0) {
-            
-            // Check if file exists to determine if we need a header row
-            $file_exists = file_exists($csv_filename);
-            
-            $file = fopen($csv_filename, 'a');
-            if ($file) {
-                // If it's a brand new file, write the headers first
-                if (!$file_exists) {
-                    fputcsv($file, ['Date', 'Account Size ($)', 'Risk %', 'Risk Amt ($)', 'Option Premium ($)', 'Stop Loss %', 'Take Profit %', Max Contracts', 'Total Cost ($)']);
-                }
-                
-                // Write the trade data row
-                $trade_data = [
-                    date('Y-m-d H:i:s'),
-                    $account_size,
-                    $risk_percent,
-                    $risk_amount,
-                    $premium,
-                    $stop_loss_percent,
-                    $take_profit_percent,
-                    $max_contracts,
-                    $total_position_cost
-                ];
-                
-                fputcsv($file, $trade_data);
-                fclose($file);
-                
-                $log_message = "✅ Trade successfully logged to CSV!";
-            } else {
-                $error_message = "❌ Error: Could not open CSV file for writing. Check server permissions.";
-            }
-        }
-    } else if (isset($_POST['calculate'])) {
-        $error_message = "⚠️ Please fill in all fields with valid numbers greater than zero.";
-    }
-}
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -92,12 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-group { margin-bottom: 15px; }
         label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px; }
         input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
-        
-        /* New Checkbox Styling */
-        .checkbox-group { display: flex; align-items: center; background: #fdfdfd; border: 1px dashed #0070f3; padding: 12px; border-radius: 4px; margin-bottom: 15px; }
-        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; margin-right: 10px; cursor: pointer; }
-        .checkbox-group label { display: inline; margin-bottom: 0; cursor: pointer; font-weight: normal; }
-        
         button { width: 100%; padding: 12px; background-color: #0070f3; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
         button:hover { background-color: #0051a8; }
         .results { margin-top: 25px; padding: 20px; background-color: #f8f9fa; border-left: 5px solid #0070f3; border-radius: 4px; }
@@ -105,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .result-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 15px; }
         .result-item span:last-child { font-weight: bold; }
         .alert-danger { background-color: #fdf2f2; border-left: 5px solid #de350b; padding: 15px; margin-bottom: 20px; border-radius: 4px; color: #de350b; font-size: 14px; }
-        .alert-success { background-color: #f2fdf4; border-left: 5px solid #24a148; padding: 15px; margin-bottom: 20px; border-radius: 4px; color: #24a148; font-size: 14px; }
+        .alert-success { background-color: #e3fcef; border-left: 5px solid #00875a; padding: 15px; margin-top: 15px; border-radius: 4px; color: #006644; font-size: 14px; text-align: center; }
     </style>
 </head>
 <body>
@@ -113,66 +26,164 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="container">
     <h2>📊 Options Risk Calculator</h2>
 
-    <!-- Notifications -->
-    <?php if (!empty($error_message)): ?>
-        <div class="alert-danger"><?= htmlspecialchars($error_message) ?></div>
-    <?php endif; ?>
+    <?php
+    // Default Values
+    $account_size = 2000;
+    $risk_percent = 2;
+    $stop_loss_percent = 20;
+    $take_profit_percent = 40;
+    $option_premium = ""; 
+    $csv_message = "";
 
-    <?php if (!empty($log_message)): ?>
-        <div class="alert-success"><?= htmlspecialchars($log_message) ?></div>
-    <?php endif; ?>
+    // Process Form Submission
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        $account_size = floatval($_POST['account_size']);
+        $risk_percent = floatval($_POST['risk_percent']);
+        $stop_loss_percent = floatval($_POST['stop_loss_percent']);
+        $take_profit_percent = floatval($_POST['take_profit_percent']);
+        $option_premium = floatval($_POST['option_premium']);
+    }
 
-    <form method="POST" action="">
+    // Calculations
+    $allowed_dollar_risk = $account_size * ($risk_percent / 100);
+    $stop_loss_decimal = $stop_loss_percent / 100;
+
+    // Prevent Division by Zero if input is cleared
+    if ($stop_loss_decimal > 0 && $option_premium > 0) {
+        // Step 1: Max capital allocation allowed for the total position based on risk parameters
+        $max_position_size = $allowed_dollar_risk / $stop_loss_decimal;
+
+        // Step 2: Calculate target execution boundaries per single contract
+        $cost_per_contract = $option_premium * 100;
+        $max_contracts = floor($max_position_size / $cost_per_contract);
+
+        // Step 3: Set trade exit prices
+        $stop_loss_price = $option_premium * (1 - ($stop_loss_percent / 100));
+        $take_profit_price = $option_premium * (1 + ($take_profit_percent / 100));
+
+        // Actual dollar parameters if max contracts are purchased
+        $actual_capital_deployed = $max_contracts * $cost_per_contract;
+        $actual_dollar_risk = $actual_capital_deployed * ($stop_loss_percent / 100);
+        $actual_dollar_reward = $actual_capital_deployed * ($take_profit_percent / 100);
+
+        // --- SERVER SIDE CSV LOGGING ---
+        if ($max_contracts > 0) {
+            $csv_file = 'trades_log.csv';
+            $file_exists = file_exists($csv_file);
+
+            // Open file in append mode ('a')
+            if ($fp = fopen($csv_file, 'a')) {
+                // If the file is brand new, write the header row first
+                if (!$file_exists) {
+                    $headers = [
+                        'Timestamp', 'Account Size ($)', 'Risk (%)', 'Entry Premium ($)', 
+                        'Stop Loss (%)', 'Take Profit (%)', 'Contracts Buy', 
+                        'Total Cash Deployed ($)', 'Max Dollar Risk ($)', 'Max Dollar Reward ($)', 
+                        'Stop Loss Level ($)', 'Take Profit Level ($)'
+                    ];
+                    fputcsv($fp, $headers);
+                }
+
+                // Prepare data row
+                $data_row = [
+                    date('Y-m-d H:i:s'),
+                    $account_size,
+                    $risk_percent,
+                    $option_premium,
+                    $stop_loss_percent,
+                    $take_profit_percent,
+                    $max_contracts,
+                    $actual_capital_deployed,
+                    $actual_dollar_risk,
+                    $actual_dollar_reward,
+                    $stop_loss_price,
+                    $take_profit_price
+                ];
+
+                // Write the trade details and close the file
+                fputcsv($fp, $data_row);
+                fclose($fp);
+                $csv_message = "✅ Position recorded to server log successfully!";
+            } else {
+                $csv_message = "❌ Error: Could not write to server log file.";
+            }
+        }
+    }
+    ?>
+
+    <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
         <div class="form-group">
-            <label for="account_size">Account Size ($)</label>
-            <input type="number" step="0.01" name="account_size" id="account_size" value="<?= htmlspecialchars($account_size) ?>" required>
+            <label for="account_size">Account Balance ($)</label>
+            <input type="number" step="0.01" name="account_size" id="account_size" value="<?php echo $account_size; ?>" required>
         </div>
-
         <div class="form-group">
-            <label for="risk_percent">Risk Per Trade (%)</label>
-            <input type="number" step="0.1" name="risk_percent" id="risk_percent" value="<?= htmlspecialchars($risk_percent) ?>" required>
+            <label for="risk_percent">Max Portfolio Risk Per Trade (%)</label>
+            <input type="number" step="0.1" name="risk_percent" id="risk_percent" value="<?php echo $risk_percent; ?>" required>
         </div>
-
         <div class="form-group">
-            <label for="premium">Option Price (eg. 1.33)</label>
-            <input type="number" step="0.01" name="premium" id="premium" value="<?= htmlspecialchars($premium) ?>" required placeholder="e.g. 2.50">
+            <label for="option_premium">Option Premium Entry Price (e.g., 1.33)</label>
+            <input type="number" step="0.01" name="option_premium" id="option_premium" value="<?php echo $option_premium; ?>" required>
         </div>
-
         <div class="form-group">
-            <label for="stop_loss_percent">Stop Loss % </label>
-            <input type="number" step="0.1" name="stop_loss_percent" id="stop_loss_percent" value="<?= htmlspecialchars($stop_loss_percent) ?>" required placeholder="e.g. 20">
+            <label for="stop_loss_percent">Option Stop Loss (%)</label>
+            <input type="number" step="1" name="stop_loss_percent" id="stop_loss_percent" value="<?php echo $stop_loss_percent; ?>" required>
         </div>
-
         <div class="form-group">
-            <label for="take_profit_percent">Take Profit % </label>
-            <input type="number" step="1" name="take_profit_percent" id="take_profit_percent" value="<?= htmlspecialchars($take_profit_percent) ?>" required placeholder="e.g. 40">
+            <label for="take_profit_percent">Option Take Profit (%)</label>
+            <input type="number" step="1" name="take_profit_percent" id="take_profit_percent" value="<?php echo $take_profit_percent; ?>" required>
         </div>
-
-        <!-- Logging Trigger -->
-        <div class="checkbox-group">
-            <input type="checkbox" name="log_trade" id="log_trade" value="1">
-            <label for="log_trade"><strong>Log Trade</strong> into server CSV spreadsheet</label>
-        </div>
-
-        <button type="submit" name="calculate">Calculate &amp; Process</button>
+        <button type="submit">Calculate Position Size</button>
     </form>
 
-    <!-- Calculation Outputs -->
-    <?php if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error_message)): ?>
+    <?php if ($_SERVER["REQUEST_METHOD"] == "POST" && $stop_loss_decimal > 0 && $option_premium > 0): ?>
         <div class="results">
-            <h3>Calculated Position Size</h3>
-            <div class="result-item">
-                <span>Total Cash Risked:</span>
-                <span>$<?= number_format($risk_amount, 2) ?></span>
-            </div>
-            <div class="result-item">
-                <span>Recommended Max Contracts:</span>
-                <span style="font-size: 18px; color: #0070f3;"><?= intval($max_contracts) ?></span>
-            </div>
-            <div class="result-item">
-                <span>Total Capital Required:</span>
-                <span>$<?= number_format($total_position_cost, 2) ?></span>
-            </div>
+            <h3>🎯 Execution Blueprint</h3>
+
+            <?php if ($max_contracts == 0): ?>
+                <div class="alert-danger">
+                    <strong>Warning:</strong> Your account allocation limit ($<?php echo number_format($max_position_size, 2); ?>) is too small to afford a single contract ($<?php echo number_format($cost_per_contract, 2); ?>) at this premium price.
+                </div>
+            <?php else: ?>
+                <div class="result-item">
+                    <span>Target Risk Budget (<?php echo $risk_percent; ?>%):</span>
+                    <span>$<?php echo number_format($allowed_dollar_risk, 2); ?></span>
+                </div>
+                <div class="result-item">
+                    <span>Max Capital Allocation Cap:</span>
+                    <span>$<?php echo number_format($max_position_size, 2); ?></span>
+                </div>
+                <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;">
+                <div class="result-item" style="font-size: 17px; color: #0070f3;">
+                    <span><strong>Contracts to Buy:</strong></span>
+                    <span><strong><?php echo $max_contracts; ?> Contract(s)</strong></span>
+                </div>
+                <div class="result-item">
+                    <span>Total Cash Deployed:</span>
+                    <span>$<?php echo number_format($actual_capital_deployed, 2); ?></span>
+                </div>
+                <div class="result-item">
+                    <span>Actual Trade Risk if Stopped:</span>
+                    <span style="color: #de350b;">-$<?php echo number_format($actual_dollar_risk, 2); ?></span>
+                </div>
+                <div class="result-item">
+                    <span>Actual Target Profit:</span>
+                    <span style="color: #00875a;">+$<?php echo number_format($actual_dollar_reward, 2); ?></span>
+                </div>
+                <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;">
+                <div class="result-item">
+                    <span><strong>Set Stop Loss Order At:</strong></span>
+                    <span style="color: #de350b;">$<?php echo number_format($stop_loss_price, 2); ?></span>
+                </div>
+                <div class="result-item">
+                    <span><strong>Set Limit Take Profit At:</strong></span>
+                    <span style="color: #00875a;">$<?php echo number_format($take_profit_price, 2); ?></span>
+                </div>
+
+                <!-- Display Server Write Status Notification -->
+                <?php if (!empty($csv_message)): ?>
+                    <div class="alert-success"><?php echo $csv_message; ?></div>
+                <?php endif; ?>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 </div>
