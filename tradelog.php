@@ -134,13 +134,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="form-group">
-            <label for="premium">Option Premium / Price ($)</label>
+            <label for="premium">Option Price (eg. 1.33)</label>
             <input type="number" step="0.01" name="premium" id="premium" value="<?= htmlspecialchars($premium) ?>" required placeholder="e.g. 2.50">
         </div>
 
         <div class="form-group">
             <label for="stop_loss_percent">Stop Loss % on Contract</label>
             <input type="number" step="1" name="stop_loss_percent" id="stop_loss_percent" value="<?= htmlspecialchars($stop_loss_percent) ?>" required placeholder="e.g. 20">
+        </div>
+
+        <div class="form-group">
+            <label for="take_profit_percent">Stop Loss % on Contract</label>
+            <input type="number" step="1" name="take_profit_percent" id="take_profit_percent" value="<?= htmlspecialchars($take_profit_percent) ?>" required placeholder="e.g. 40">
         </div>
 
         <!-- Logging Trigger -->
