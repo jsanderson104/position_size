@@ -1,85 +1,122 @@
+<?php
+// Set default values
+$ticker = isset($_POST['ticker']) ? htmlspecialchars($_POST['ticker']) : 'AAPL';
+$balance = isset($_POST['balance']) ? (float)$_POST['balance'] : 2000.00;
+$quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 2;
+$max_risk_pct = isset($_POST['max_risk_pct']) ? (float)$_POST['max_risk_pct'] : 1.33;
+$option_price = isset($_POST['option_price']) ? (float)$_POST['option_price'] : 20.00;
+$stop_loss_pct = isset($_POST['stop_loss_pct']) ? (float)$_POST['stop_loss_pct'] : 20.00;
+$take_profit_pct = isset($_POST['take_profit_pct']) ? (float)$_POST['take_profit_pct'] : 40.00;
+
+// Calculations
+$multiplier = 100; // Standard option contract multiplier
+
+// 1. Max dollar risk allowed based on account balance
+$max_risk_dollars = $balance * ($max_risk_pct / 100);
+
+// 2. Risk per single contract based on stop loss percentage
+$risk_per_contract_dollars = $option_price * ($stop_loss_pct / 100) * $multiplier;
+
+// 3. Determine recommended contracts to stay within risk parameter
+$recommended_contracts = $risk_per_contract_dollars > 0 ? floor($max_risk_dollars / $risk_per_contract_dollars) : 0;
+
+// 4. Check if a single contract exceeds the maximum risk allowed
+$is_too_expensive = ($risk_per_contract_dollars > $max_risk_dollars);
+
+// 5. Collateral / Capital required for the requested quantity
+$collateral_needed = $option_price * $quantity * $multiplier;
+
+// 6. Stop Loss and Take Profit prices
+$stop_loss_price = $option_price * (1 - ($stop_loss_pct / 100));
+$take_profit_price = $option_price * (1 + ($take_profit_pct / 100));
+
+// 7. Actual dollar risk for the current position size
+$actual_risk_dollars = $quantity * $risk_per_contract_dollars;
+?>
+
 <!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Options Trade Tracker</title>
+    <title>Options Position Size Calculator</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 500px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h2 { margin-top: 0; color: #222; }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; }
+        .container { max-width: 600px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="number"], input[type="date"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { background-color: #007BFF; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
         button:hover { background-color: #0056b3; }
-        .results { margin-top: 25px; padding: 15px; background: #e9ecef; border-left: 5px solid #28a745; border-radius: 4px; }
-        .results h3 { margin-top: 0; }
-        .results p { margin: 8px 0; font-size: 15px; }
+        .results { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 4px; }
+        .alert { padding: 10px; margin-bottom: 15px; border-radius: 4px; font-weight: bold; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Options Trade Inputs</h2>
-    <form method="POST" action="">
+    <h2>Options Position Size Calculator</h2>
+    
+    <form method="post" action="">
+        <div class="form-group">
+            <label>Ticker:</label>
+            <input type="text" name="ticker" value="<?php echo $ticker; ?>" required>
+        </div>
         <div class="form-group">
             <label>Account Balance ($):</label>
-            <input type="number" step="0.01" value="2000" name="account_balance" required value="<?php echo isset($_POST['account_balance']) ? htmlspecialchars($_POST['account_balance']) : ''; ?>">
+            <input type="number" step="0.01" name="balance" value="<?php echo $balance; ?>" required>
         </div>
         <div class="form-group">
-            <label>TICKER:</label>
-            <input type="text" name="ticker" required style="text-transform: uppercase;" value="<?php echo isset($_POST['ticker']) ? htmlspecialchars($_POST['ticker']) : ''; ?>">
+            <label>Quantity of Contracts:</label>
+            <input type="number" name="quantity" value="<?php echo $quantity; ?>" required>
         </div>
         <div class="form-group">
-            <label>Option Price (eg 1.33):</label>
-            <input type="number" step="0.01" name="option_price" required value="<?php echo isset($_POST['option_price']) ? htmlspecialchars($_POST['option_price']) : ''; ?>">
+            <label>Max Risk % of Balance per Trade:</label>
+            <input type="number" step="0.01" name="max_risk_pct" value="<?php echo $max_risk_pct; ?>" required>
         </div>
         <div class="form-group">
-            <label>Expiration Date:</label>
-            <input type="date" name="expiration_date" required value="<?php echo isset($_POST['expiration_date']) ? htmlspecialchars($_POST['expiration_date']) : ''; ?>">
+            <label>Price of the Option ($):</label>
+            <input type="number" step="0.01" name="option_price" value="<?php echo $option_price; ?>" required>
         </div>
         <div class="form-group">
             <label>Stop Loss Percent (%):</label>
-            <input type="number" step="0.01" value="20" name="stop_loss_pct" required value="<?php echo isset($_POST['stop_loss_pct']) ? htmlspecialchars($_POST['stop_loss_pct']) : ''; ?>">
+            <input type="number" step="0.01" name="stop_loss_pct" value="<?php echo $stop_loss_pct; ?>" required>
         </div>
         <div class="form-group">
             <label>Take Profit Percent (%):</label>
-            <input type="number" step="0.01" value="40" name="take_profit_pct" required value="<?php echo isset($_POST['take_profit_pct']) ? htmlspecialchars($_POST['take_profit_pct']) : ''; ?>">
+            <input type="number" step="0.01" name="take_profit_pct" value="<?php echo $take_profit_pct; ?>" required>
         </div>
-        <button type="submit" name="calculate">Calculate Trade</button>
+        <button type="submit">Calculate</button>
     </form>
 
-    <?php
-    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['calculate'])) {
-        // Collect and sanitize inputs
-        $ticker = strtoupper(htmlspecialchars($_POST['ticker']));
-        $option_price = floatval($_POST['option_price']);
-        $expiration_date = htmlspecialchars($_POST['expiration_date']);
-        $stop_loss_pct = floatval($_POST['stop_loss_pct']);
-        $take_profit_pct = floatval($_POST['take_profit_pct']);
-
-        // Calculate Target Prices based on option premium price
-        // Stop Loss Price = Option Price * (1 - Stop Loss %)
-        $stop_loss_price = $option_price * (1 - ($stop_loss_pct / 100));
-        
-        // Take Profit Price = Option Price * (1 + Take Profit %)
-        $take_profit_price = $option_price * (1 + ($take_profit_pct / 100));
-
-        // Format dates for cleaner readability (Optional, change format if needed)
-        $formatted_date = date("m/d/Y", strtotime($expiration_date));
-        ?>
-
+    <?php if ($_SERVER['REQUEST_METHOD'] == 'POST'): ?>
         <div class="results">
-            <h3>Trade Outputs</h3>
-            <p><strong>TICKER:</strong> <?php echo $ticker; ?></p>
-            <p><strong>Option Price:</strong> $<?php echo number_format($option_price, 2); ?></p>
-            <p><strong>Expiration Date:</strong> <?php echo $formatted_date; ?></p>
-            <p><strong>Stop Loss:</strong> $<?php echo number_format($stop_loss_price, 2); echo " ($stop_loss_pct" . "%)"; ?></p>
-            <p><strong>Take Profit:</strong> $<?php echo number_format($take_profit_price, 2);  echo " ($take_profit_pct" . "%)"; ?></p>
+            <h3>Calculation Results for <?php echo strtoupper($ticker); ?></h3>
+            
+            <!-- Risk Validation Alert -->
+            <?php if ($is_too_expensive): ?>
+                <div class="alert alert-danger">
+                    ⚠️ WARNING: The price/risk of this option is too big for your defined risk parameters! A single contract risks $<?php echo number_format($risk_per_contract_dollars, 2); ?>, which exceeds your max allowed risk of $<?php echo number_format($max_risk_dollars, 2); ?>.
+                </div>
+            <?php else: ?>
+                <div class="alert alert-success">
+                    ✅ Option price fits within your risk parameters.
+                </div>
+            <?php endif; ?>
+
+            <ul>
+                <li><strong>Max Allowed Risk:</strong> $<?php echo number_format($max_risk_dollars, 2); ?> (<?php echo $max_risk_pct; ?>% of balance)</li>
+                <li><strong>Recommended Contracts to Buy:</strong> <?php echo $recommended_contracts; ?> contract(s)</li>
+                <li><strong>Collateral/Capital Needed (for <?php echo $quantity; ?> contracts):</strong> $<?php echo number_format($collateral_needed, 2); ?></li>
+                <li><strong>Stop Loss Price:</strong> $<?php echo number_format($stop_loss_price, 2); ?> (-<?php echo $stop_loss_pct; ?>%)</li>
+                <li><strong>Take Profit Price:</strong> $<?php echo number_format($take_profit_price, 2); ?> (+<?php echo $take_profit_pct; ?>%)</li>
+                <li><strong>Total Position Risk (for <?php echo $quantity; ?> contracts):</strong> $<?php echo number_format($actual_risk_dollars, 2); ?></li>
+            </ul>
         </div>
-        
-    <?php } ?>
+    <?php endif; ?>
 </div>
 
 </body>
 </html>
+
