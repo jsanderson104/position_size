@@ -74,8 +74,8 @@
             <p><strong>TICKER:</strong> <?php echo $ticker; ?></p>
             <p><strong>Option Price:</strong> $<?php echo number_format($option_price, 2); ?></p>
             <p><strong>Expiration Date:</strong> <?php echo $formatted_date; ?></p>
-            <p><strong>Stop Loss:</strong> $<?php echo number_format($stop_loss_price, 2); echo " $stop_loss_pct " . "%"; ?></p>
-            <p><strong>Take Profit:</strong> $<?php echo number_format($take_profit_price, 2);  echo " $take_profit_pct " . "%"; ?></p>
+            <p><strong>Stop Loss:</strong> $<?php echo number_format($stop_loss_price, 2); echo " ($stop_loss_pct" . "%)"; ?></p>
+            <p><strong>Take Profit:</strong> $<?php echo number_format($take_profit_price, 2);  echo " ($take_profit_pct" . "%)"; ?></p>
         </div>
         
     <?php } ?>
