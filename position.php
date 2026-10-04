@@ -1,85 +1,169 @@
+<?php
+// Initialize variables with default values
+$account_size = 25000;
+$risk_percent = 2;
+$entry_price = 3.50;
+$stop_loss = 2.50;
+$contract_multiplier = 100;
+
+$results = null;
+$error = null;
+
+// Process form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $account_size = filter_input(INPUT_POST, 'account_size', FILTER_VALIDATE_FLOAT);
+    $risk_percent = filter_input(INPUT_POST, 'risk_percent', FILTER_VALIDATE_FLOAT);
+    $entry_price = filter_input(INPUT_POST, 'entry_price', FILTER_VALIDATE_FLOAT);
+    $stop_loss = filter_input(INPUT_POST, 'stop_loss', FILTER_VALIDATE_FLOAT);
+
+    // Validation
+    if ($account_size <= 0 || $risk_percent <= 0 || $entry_price <= 0 || $stop_loss <= 0) {
+        $error = "All values must be greater than zero.";
+    } elseif ($stop_loss >= $entry_price) {
+        $error = "Stop loss price must be lower than the entry price for a long position.";
+    } else {
+        // Calculations
+        $max_risk_dollars = $account_size * ($risk_percent / 100);
+        $risk_per_option = $entry_price - $stop_loss;
+        $risk_per_contract = $risk_per_option * $contract_multiplier;
+        
+        // Calculate max contracts based on risk limit
+        $contracts_by_risk = floor($max_risk_dollars / $risk_per_contract);
+        
+        // Calculate max contracts based on total buying power (capital constraints)
+        $cost_per_contract = $entry_price * $contract_multiplier;
+        $contracts_by_capital = floor($account_size / $cost_per_contract);
+        
+        // Final position size is the bottleneck between risk limit and capital limit
+        $final_contracts = min($contracts_by_risk, $contracts_by_capital);
+        
+        $total_cost = $final_contracts * $cost_per_contract;
+        $actual_risk_dollars = $final_contracts * $risk_per_contract;
+        $capital_allocation_pct = ($total_cost / $account_size) * 100;
+
+        if ($final_contracts <= 0) {
+            $error = "Your account size or risk tolerance is too small to purchase even 1 contract under these parameters.";
+        } else {
+            $results = [
+                'max_risk_dollars' => $max_risk_dollars,
+                'risk_per_contract' => $risk_per_contract,
+                'final_contracts' => $final_contracts,
+                'total_cost' => $total_cost,
+                'actual_risk_dollars' => $actual_risk_dollars,
+                'capital_allocation_pct' => $capital_allocation_pct
+            ];
+        }
+    }
+}
+?>
 <!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Options Trade Tracker</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 500px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h2 { margin-top: 0; color: #222; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="number"], input[type="date"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; }
-        button:hover { background-color: #0056b3; }
-        .results { margin-top: 25px; padding: 15px; background: #e9ecef; border-left: 5px solid #28a745; border-radius: 4px; }
-        .results h3 { margin-top: 0; }
-        .results p { margin: 8px 0; font-size: 15px; }
-    </style>
+    <title>Options Position Size Calculator</title>
+    <script src="https://jsdelivr.net"></script>
 </head>
-<body>
+<body class="bg-gray-100 text-gray-900 font-sans antialiased min-h-screen flex items-center justify-center p-4">
 
-<div class="container">
-    <h2>Options Trade Inputs</h2>
-    <form method="POST" action="">
-        <div class="form-group">
-            <label>Account Balance ($):</label>
-            <input type="number" step="0.01" value="2000" name="account_balance" required value="<?php echo isset($_POST['account_balance']) ? htmlspecialchars($_POST['account_balance']) : ''; ?>">
-        </div>
-        <div class="form-group">
-            <label>TICKER:</label>
-            <input type="text" name="ticker" required style="text-transform: uppercase;" value="<?php echo isset($_POST['ticker']) ? htmlspecialchars($_POST['ticker']) : ''; ?>">
-        </div>
-        <div class="form-group">
-            <label>Option Price (eg 1.33):</label>
-            <input type="number" step="0.01" name="option_price" required value="<?php echo isset($_POST['option_price']) ? htmlspecialchars($_POST['option_price']) : ''; ?>">
-        </div>
-        <div class="form-group">
-            <label>Expiration Date:</label>
-            <input type="date" name="expiration_date" required value="<?php echo isset($_POST['expiration_date']) ? htmlspecialchars($_POST['expiration_date']) : ''; ?>">
-        </div>
-        <div class="form-group">
-            <label>Stop Loss Percent (%):</label>
-            <input type="number" step="0.01" value="20" name="stop_loss_pct" required value="<?php echo isset($_POST['stop_loss_pct']) ? htmlspecialchars($_POST['stop_loss_pct']) : ''; ?>">
-        </div>
-        <div class="form-group">
-            <label>Take Profit Percent (%):</label>
-            <input type="number" step="0.01" value="40" name="take_profit_pct" required value="<?php echo isset($_POST['take_profit_pct']) ? htmlspecialchars($_POST['take_profit_pct']) : ''; ?>">
-        </div>
-        <button type="submit" name="calculate">Calculate Trade</button>
-    </form>
-
-    <?php
-    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['calculate'])) {
-        // Collect and sanitize inputs
-        $ticker = strtoupper(htmlspecialchars($_POST['ticker']));
-        $option_price = floatval($_POST['option_price']);
-        $expiration_date = htmlspecialchars($_POST['expiration_date']);
-        $stop_loss_pct = floatval($_POST['stop_loss_pct']);
-        $take_profit_pct = floatval($_POST['take_profit_pct']);
-
-        // Calculate Target Prices based on option premium price
-        // Stop Loss Price = Option Price * (1 - Stop Loss %)
-        $stop_loss_price = $option_price * (1 - ($stop_loss_pct / 100));
+    <div class="max-w-4xl w-full bg-white rounded-xl shadow-md overflow-hidden grid md:grid-cols-2">
         
-        // Take Profit Price = Option Price * (1 + Take Profit %)
-        $take_profit_price = $option_price * (1 + ($take_profit_pct / 100));
+        <!-- Form Section -->
+        <div class="p-6 md:p-8 border-b md:border-b-0 md:border-r border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Position Parameter Inputs</h2>
+            
+            <?php if ($error): ?>
+                <div class="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                    <?php echo htmlspecialchars($error); ?>
+                </div>
+            <?php endif; ?>
 
-        // Format dates for cleaner readability (Optional, change format if needed)
-        $formatted_date = date("m/d/Y", strtotime($expiration_date));
-        ?>
+            <form action="" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1" for="account_size">Total Account Size ($)</label>
+                    <input class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" 
+                           type="number" step="0.01" id="account_size" name="account_size" value="<?php echo htmlspecialchars($account_size); ?>" required>
+                </div>
 
-        <div class="results">
-            <h3>Trade Outputs</h3>
-            <p><strong>TICKER:</strong> <?php echo $ticker; ?></p>
-            <p><strong>Option Price:</strong> $<?php echo number_format($option_price, 2); ?></p>
-            <p><strong>Expiration Date:</strong> <?php echo $formatted_date; ?></p>
-            <p><strong>Stop Loss:</strong> $<?php echo number_format($stop_loss_price, 2); echo " ($stop_loss_pct" . "%)"; ?></p>
-            <p><strong>Take Profit:</strong> $<?php echo number_format($take_profit_price, 2);  echo " ($take_profit_pct" . "%)"; ?></p>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1" for="risk_percent">Risk Per Trade (%)</label>
+                    <input class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" 
+                           type="number" step="0.1" id="risk_percent" name="risk_percent" value="<?php echo htmlspecialchars($risk_percent); ?>" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1" for="entry_price">Option Entry Premium ($)</label>
+                    <input class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" 
+                           type="number" step="0.01" id="entry_price" name="entry_price" value="<?php echo htmlspecialchars($entry_price); ?>" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1" for="stop_loss">Option Stop Loss Price ($)</label>
+                    <input class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" 
+                           type="number" step="0.01" id="stop_loss" name="stop_loss" value="<?php echo htmlspecialchars($stop_loss); ?>" required>
+                </div>
+
+                <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold p-3 rounded-lg transition duration-200 mt-2 cursor-pointer" type="submit">
+                    Calculate Size
+                </button>
+            </form>
         </div>
-        
-    <?php } ?>
-</div>
+
+        <!-- Output Results Section -->
+        <div class="p-6 md:p-8 bg-gray-50 flex flex-col justify-between">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Calculated Position Sizing</h2>
+                
+                <?php if ($results): ?>
+                    <div class="space-y-5">
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                            <span class="block text-xs uppercase tracking-wide font-bold text-blue-600">Recommended Size</span>
+                            <span class="text-4xl font-extrabold text-blue-900"><?php echo number_format($results['final_contracts']); ?></span>
+                            <span class="block text-sm font-medium text-blue-700 mt-1">Contracts</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-2xs">
+                                <span class="block text-xs text-gray-500 font-medium">Total Capital Cost</span>
+                                <span class="text-lg font-bold text-gray-800">$<?php echo number_format($results['total_cost'], 2); ?></span>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-2xs">
+                                <span class="block text-xs text-gray-500 font-medium">Account Allocated</span>
+                                <span class="text-lg font-bold text-gray-800"><?php echo number_format($results['capital_allocation_pct'], 1); ?>%</span>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-2xs">
+                                <span class="block text-xs text-gray-500 font-medium">Risk Per Contract</span>
+                                <span class="text-lg font-bold text-gray-800">$<?php echo number_format($results['risk_per_contract'], 2); ?></span>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-2xs">
+                                <span class="block text-xs text-gray-500 font-medium">Actual Dollar Risk</span>
+                                <span class="text-lg font-bold text-gray-800">$<?php echo number_format($results['actual_risk_dollars'], 2); ?></span>
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-gray-500 space-y-1 pt-2 border-t border-gray-200">
+                            <p>• Max planned risk cap based on percentage: <strong>$<?php echo number_format($results['max_risk_dollars'], 2); ?></strong></p>
+                            <p>• Calculations assume standard equity option multiplier ($100 per contract point).</p>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="h-full flex items-center justify-center text-center text-gray-400 py-12">
+                        <div>
+                            <svg class="mx-auto h-12 w-12 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 002-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            <p class="text-sm">Submit the parameters to see sizing allocation results.</p>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
+            
+            <div class="mt-6 text-2xs text-gray-400 text-center">
+                Always check liquidity, slippage, and spread variables before final execution.
+            </div>
+        </div>
+
+    </div>
 
 </body>
 </html>
