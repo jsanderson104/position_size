@@ -151,3 +151,4 @@ $potential_profit = $potential_profit_per_contract * $quantity;
 </body>
 </html>
 
+
