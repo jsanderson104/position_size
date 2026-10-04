@@ -29,9 +29,9 @@
     // Default Values
     $account_size = 2000;
     $risk_percent = 2;
-    $stop_loss_percent = 30;
-    $take_profit_percent = 60;
-    $option_premium = 1.33; // Default premium ($133 per contract)
+    $stop_loss_percent = 20;
+    $take_profit_percent = 40;
+    $option_premium = ""; // Default premium ($133 per contract)
 
     // Process Form Submission
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
