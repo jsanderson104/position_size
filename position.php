@@ -60,31 +60,36 @@ $actual_risk_dollars = $quantity * $risk_per_contract_dollars;
     
     <form method="post" action="">
         <div class="form-group">
-            <label>Ticker:</label>
-            <input type="text" name="ticker" value="<?php echo $ticker; ?>" required>
-        </div>
-        <div class="form-group">
             <label>Account Balance ($):</label>
             <input type="number" step="0.01" name="balance" value="<?php echo $balance; ?>" required>
-        </div>
-        <div class="form-group">
-            <label>Quantity of Contracts:</label>
-            <input type="number" name="quantity" value="<?php echo $quantity; ?>" required>
         </div>
         <div class="form-group">
             <label>Max Risk % of Balance per Trade:</label>
             <input type="number" step="0.01" name="max_risk_pct" value="<?php echo $max_risk_pct; ?>" required>
         </div>
+
         <div class="form-group">
-            <label>Price of the Option ($):</label>
+            <label>Ticker:</label>
+            <input type="text" name="ticker" value="<?php echo $ticker; ?>" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Option Price (eg 1.33):</label>
             <input type="number" step="0.01" name="option_price" value="<?php echo $option_price; ?>" required>
         </div>
+
         <div class="form-group">
-            <label>Stop Loss Percent (%):</label>
+            <label>Quantity:</label>
+            <input type="number" name="quantity" value="<?php echo $quantity; ?>" required>
+        </div>
+        
+        
+        <div class="form-group">
+            <label>Stop Loss (%):</label>
             <input type="number" step="0.01" name="stop_loss_pct" value="<?php echo $stop_loss_pct; ?>" required>
         </div>
         <div class="form-group">
-            <label>Take Profit Percent (%):</label>
+            <label>Take Profit (%):</label>
             <input type="number" step="0.01" name="take_profit_pct" value="<?php echo $take_profit_pct; ?>" required>
         </div>
         <button type="submit">Calculate</button>
