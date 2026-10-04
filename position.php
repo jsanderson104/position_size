@@ -1,10 +1,10 @@
 <?php
 // Set default values
-$ticker = isset($_POST['ticker']) ? htmlspecialchars($_POST['ticker']) : 'AAPL';
+$ticker = isset($_POST['ticker']) ? htmlspecialchars($_POST['ticker']) : '';
 $balance = isset($_POST['balance']) ? (float)$_POST['balance'] : 2000.00;
-$quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 2;
+$quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 1;
 $max_risk_pct = isset($_POST['max_risk_pct']) ? (float)$_POST['max_risk_pct'] : 1.33;
-$option_price = isset($_POST['option_price']) ? (float)$_POST['option_price'] : 20.00;
+$option_price = isset($_POST['option_price']) ? (float)$_POST['option_price'] : 0.00;
 $stop_loss_pct = isset($_POST['stop_loss_pct']) ? (float)$_POST['stop_loss_pct'] : 20.00;
 $take_profit_pct = isset($_POST['take_profit_pct']) ? (float)$_POST['take_profit_pct'] : 40.00;
 
