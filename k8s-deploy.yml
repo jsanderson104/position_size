@@ -24,6 +24,7 @@ spec:
       containers:
         - name: positionsize
           image: docker.io/jsanderson104/stuff:position_size-v1
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
               name: web-80
