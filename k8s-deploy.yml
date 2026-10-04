@@ -8,6 +8,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: position-szie-deploy
+  namespace: position_size
   labels:
     app: position-app
 spec:
@@ -21,7 +22,6 @@ spec:
         app: position-app
     spec:
       containers:
-        # --- Guacamole App Container ---
         - name: positionsize
           image: docker.io/jsanderson104/stuff:position_size-v1
           ports:
@@ -32,6 +32,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: positionsize-loadbalancer
+  namespace: position_size
   labels:
     app: position-app
 spec:
