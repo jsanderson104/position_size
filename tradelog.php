@@ -140,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="form-group">
             <label for="stop_loss_percent">Stop Loss % </label>
-            <input type="number" step="1" name="stop_loss_percent" id="stop_loss_percent" value="<?= htmlspecialchars($stop_loss_percent) ?>" required placeholder="e.g. 20">
+            <input type="number" step="0.1" name="stop_loss_percent" id="stop_loss_percent" value="<?= htmlspecialchars($stop_loss_percent) ?>" required placeholder="e.g. 20">
         </div>
 
         <div class="form-group">
