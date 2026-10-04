@@ -17,3 +17,6 @@ EOF
 
 podman build -t position_size_app -f Containerfile
 
+podman login docker.io || exit 1
+podman tag position_size_app position_size_app:latest
+podman push localhost/position_size_app docker.io/jsanderson104/stuff:position_size-v1
