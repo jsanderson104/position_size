@@ -139,12 +139,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="form-group">
-            <label for="stop_loss_percent">Stop Loss % on Contract</label>
+            <label for="stop_loss_percent">Stop Loss % </label>
             <input type="number" step="1" name="stop_loss_percent" id="stop_loss_percent" value="<?= htmlspecialchars($stop_loss_percent) ?>" required placeholder="e.g. 20">
         </div>
 
         <div class="form-group">
-            <label for="take_profit_percent">Stop Loss % on Contract</label>
+            <label for="take_profit_percent">Take Profit % </label>
             <input type="number" step="1" name="take_profit_percent" id="take_profit_percent" value="<?= htmlspecialchars($take_profit_percent) ?>" required placeholder="e.g. 40">
         </div>
 
