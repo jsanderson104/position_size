@@ -34,8 +34,8 @@ $take_profit_price = $option_price * (1 + ($take_profit_pct / 100));
 $actual_risk_dollars = $quantity * $risk_per_contract_dollars;
 
 // 8. Potential Profit
-$potential_profit_per_contract = $option_price * ($take_profit_pct/100) * 100
-$potential_profit = $potential_profit_per_contract * $quantity
+$potential_profit_per_contract = $option_price * ($take_profit_pct/100) * 100;
+$potential_profit = $potential_profit_per_contract * $quantity;
 ?>
 
 <!DOCTYPE html>
