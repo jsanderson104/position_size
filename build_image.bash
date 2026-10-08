@@ -7,6 +7,7 @@ FROM php:8.2-apache
 
 # Copy the local position.php file into the container as index.php
 COPY position.php /var/www/html/index.php
+COPY credit-spread-calc.php /var/www/html/creditspread.php
 #COPY tradelog.php /var/www/html/index.php
 RUN chmod 644 /var/www/html/index.php
 
