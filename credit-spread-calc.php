@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'buy_back_sl'   => number_format($buy_back_sl_price, 2),
         'total_credit'   => number_format($total_credit_collected, 2),
         'total_profit'   => number_format($total_potential_profit, 2),
-        'total_loss'     => number_format($total_potential_loss, 2)
+        'total_loss'     => number_format($total_potential_loss, 2),
         'total_collateral'  => $quantity * 500
     ];
 }
