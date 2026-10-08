@@ -9,7 +9,7 @@ FROM php:8.2-apache
 COPY position.php /var/www/html/index.php
 COPY credit-spread-calc.php /var/www/html/creditspread.php
 #COPY tradelog.php /var/www/html/index.php
-RUN chmod 644 /var/www/html/index.php
+RUN chmod 644 /var/www/html/*.php
 
 # Expose port 80 (standard for Apache)
 EXPOSE 80
@@ -21,4 +21,4 @@ podman build -t position_size_app -f Containerfile
 
 podman login docker.io || exit 1
 podman tag position_size_app position_size_app:latest
-podman push localhost/position_size_app docker.io/jsanderson104/stuff:position_size-v1
+podman push localhost/position_size_app docker.io/jsanderson104/stuff:position_size-creditspread
