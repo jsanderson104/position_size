@@ -23,7 +23,8 @@ spec:
     spec:
       containers:
         - name: positionsize
-          image: docker.io/jsanderson104/stuff:position_size-v1
+          #image: docker.io/jsanderson104/stuff:position_size-v1
+          image: docker.io/jsanderson104/stuff:position_size-creditspread
           imagePullPolicy: Always
           ports:
             - containerPort: 80
