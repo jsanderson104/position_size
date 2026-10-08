@@ -76,6 +76,8 @@ $potential_profit = $potential_profit_per_contract * $quantity;
 </head>
 <body>
 
+<h1> Looking for the Credit-Spread Calculator.. <a href="credit-spread-calc.php>Here</a><br></h1>
+    
 <div class="container">
     <h2>Options Position Size Calculator</h2>
     
