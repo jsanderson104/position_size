@@ -69,6 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 
+<h1> Looking for the Credit-Spread Calculator.. <a href="credit-spread-calc.php>Here</a><br></h1>
+    
 <div class="container">
     <h2>Credit Spread Calculator</h2>
     
